@@ -13,94 +13,101 @@
     </style>
 </head>
 <body class="min-h-screen py-12 px-4">
-    <!-- Loading overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
-        <div class="text-center">
-            <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-100 border-r-4 border-r-transparent mb-4"></div>
-            <p class="text-white text-lg font-medium">Analyzing image...</p>
-        </div>
-    </div>
-    
+
     <!-- Navbar -->
     <nav class="fixed top-0 left-0 right-0 bg-black bg-opacity-80 text-white shadow-lg px-6 py-4 z-10">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
                 <span class="font-bold text-xl">DeepFake Detector</span>
             </div>
             <div class="flex space-x-4">
-                <a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Home</a>
-                <a href="/predict" class="px-3 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">Detect</a>
+                <a href="/" class="px-3 py-2 text-gray-300 hover:text-white">Home</a>
+                <a href="/predict" class="px-3 py-2 text-white bg-blue-600 rounded">Detect</a>
             </div>
         </div>
     </nav>
-    
-    <div class="max-w-4xl mx-auto mt-12">
+
+    <div class="max-w-4xl mx-auto mt-20">
+
+        <!-- FORM -->
         <div class="bg-black bg-opacity-75 p-8 rounded-xl shadow-2xl mb-8">
-            <h1 class="text-3xl font-bold text-white text-center mb-6">Upload Image for Detection</h1>
-            
-            <form action="/predict" method="post" enctype="multipart/form-data" class="space-y-6">
-                <div class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center">
-                    <div class="space-y-2">
-                        <p class="text-gray-300 text-lg">Drag and drop image or click to browse</p>
-                        <input type="file" name="file" filename="uploaded-image" 
-                               class="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-                    </div>
+            <h1 class="text-3xl font-bold text-white text-center mb-6">
+                Upload Image for Detection
+            </h1>
+
+            <form action="/predict" method="POST" enctype="multipart/form-data">
+
+                <!-- DROP AREA -->
+                <div id="drop-area" 
+                     class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center cursor-pointer">
+
+                    <p class="text-gray-300 text-lg mb-2">
+                        Drag & Drop or Click to Upload
+                    </p>
+
+                    <input id="fileInput" type="file" name="file" required class="hidden">
+
+                    <p id="file-name" class="text-gray-400 text-sm"></p>
                 </div>
-                
-                <div class="text-center">
-                    <button type="submit" class="py-3 px-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-600 hover:to-purple-700 transition duration-300 ease-in-out">
+
+                <!-- BUTTON -->
+                <div class="text-center mt-6">
+                    <button type="submit"
+                        class="py-3 px-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg">
                         Analyze Image
                     </button>
                 </div>
+
             </form>
         </div>
 
+        <!-- RESULTS -->
         {% if graph %}
         <div class="bg-black bg-opacity-75 p-8 rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-bold text-white text-center mb-6">Detection Results</h2>
-            
-            <div class="flex flex-col md:flex-row items-center justify-around gap-8">
-                <div class="bg-gray-800 p-4 rounded-lg">
-                    <img src="static/images/{{ filename }}" alt="Uploaded Image" class="w-64 h-64 object-cover rounded-lg">
-                    <p class="text-gray-300 text-center mt-2">Uploaded Image</p>
-                </div>
-                
-                <div class="bg-gray-800 p-4 rounded-lg">
-                    <img src="data:image/png;base64,{{ graph }}" alt="Prediction Graph" class="w-64 object-contain rounded-lg">
-                    <p class="text-gray-300 text-center mt-2">Analysis Results</p>
-                </div>
+            <h2 class="text-2xl text-white text-center mb-6">Results</h2>
+
+            <div class="flex flex-col md:flex-row justify-center gap-8">
+
+                <img src="{{ url_for('static', filename='images/' + filename) }}" 
+                     class="w-64 h-64 object-cover rounded">
+
+                <img src="data:image/png;base64,{{ graph }}" 
+                     class="w-64 rounded">
             </div>
-            
-            <div class="mt-8 text-center">
-                <h3 class="text-3xl font-bold {% if prediction == 'Real' %}text-green-500{% else %}text-red-500{% endif %}">
-                    {{ prediction }}
-                </h3>
+
+            <div class="text-center mt-6">
+                <h3 class="text-3xl font-bold text-white">{{ prediction }}</h3>
                 <p class="text-gray-300 mt-2">
-                    {% if prediction == 'Real' %}
-                    This image appears to be authentic with {{ prob_real }}% confidence.
-                    {% else %}
-                    This image appears to be manipulated (deepfake) with {{ prob_fake }}% confidence.
-                    {% endif %}
+                    Real: {{ prob_real }}% | Fake: {{ prob_fake }}%
                 </p>
-                
-                <div class="mt-4 flex justify-center gap-8">
-                    <div class="text-center">
-                        <div class="text-green-500 font-bold">{{ prob_real }}%</div>
-                        <div class="text-gray-400 text-sm">Real</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-red-500 font-bold">{{ prob_fake }}%</div>
-                        <div class="text-gray-400 text-sm">Fake</div>
-                    </div>
-                </div>
             </div>
         </div>
         {% endif %}
+
     </div>
-       
-    <script src="static/js/script.js"></script>
+
+    <!-- JS (FIXED, SAFE) -->
+    <script>
+        const dropArea = document.getElementById("drop-area");
+        const fileInput = document.getElementById("fileInput");
+        const fileName = document.getElementById("file-name");
+
+        dropArea.addEventListener("click", () => fileInput.click());
+
+        fileInput.addEventListener("change", () => {
+            fileName.textContent = fileInput.files[0].name;
+        });
+
+        dropArea.addEventListener("dragover", (e) => {
+            e.preventDefault();
+        });
+
+        dropArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            fileInput.files = e.dataTransfer.files;
+            fileName.textContent = e.dataTransfer.files[0].name;
+        });
+    </script>
+
 </body>
 </html>
