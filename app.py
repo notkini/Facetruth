@@ -6,14 +6,12 @@ import logging
 import os
 from pathlib import Path
 
-import torch
+import numpy as np
+import onnxruntime as ort
 from flask import Flask, render_template, request
 from PIL import Image, UnidentifiedImageError
-from torchvision import transforms
 from werkzeug.exceptions import RequestEntityTooLarge
 from werkzeug.utils import secure_filename
-
-from model import MesoNet
 
 if os.environ.get("VERCEL"):
     logging.basicConfig(level=logging.INFO)
@@ -25,19 +23,11 @@ ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
 
-device = torch.device("cpu")
-transform = transforms.Compose(
-    [
-        transforms.Resize((256, 256)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ]
+session = ort.InferenceSession(
+    str(ROOT / "mesonet_model.onnx"),
+    providers=["CPUExecutionProvider"],
 )
-model = MesoNet().to(device)
-model.load_state_dict(
-    torch.load(ROOT / "mesonet_model.pth", map_location=device, weights_only=True)
-)
-model.eval()
+model_input = session.get_inputs()[0].name
 
 
 def predict(image_bytes: bytes) -> tuple[float, str]:
@@ -48,9 +38,13 @@ def predict(image_bytes: bytes) -> tuple[float, str]:
         preview = io.BytesIO()
         image.save(preview, format="JPEG", quality=88)
 
-    tensor = transform(image).unsqueeze(0).to(device)
-    with torch.inference_mode():
-        probability = float(model(tensor).reshape(-1)[0].item())
+    image = image.resize((256, 256), Image.Resampling.BILINEAR)
+    tensor = np.asarray(image, dtype=np.float32) / 255.0
+    tensor = (tensor - np.array([0.485, 0.456, 0.406], dtype=np.float32)) / np.array(
+        [0.229, 0.224, 0.225], dtype=np.float32
+    )
+    tensor = np.transpose(tensor, (2, 0, 1))[None, ...]
+    probability = float(session.run(None, {model_input: tensor})[0].reshape(-1)[0])
     preview_data = base64.b64encode(preview.getvalue()).decode("ascii")
     return probability, f"data:image/jpeg;base64,{preview_data}"
 
