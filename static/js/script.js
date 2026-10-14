@@ -1,70 +1,51 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle form submission and show loading spinner
-    const form = document.querySelector('form[action="/predict"]');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    
-    if (form && loadingOverlay) {
-        form.addEventListener('submit', function() {
-            if (form.getAttribute('method') === 'post') {
-                // Check if a file was selected before showing the loading spinner
-                const fileInput = document.querySelector('input[type="file"]');
-                if (fileInput && fileInput.files.length > 0) {
-                    loadingOverlay.classList.remove('hidden');
-                }
-            }
-        });
+document.addEventListener('DOMContentLoaded', () => {
+  const dropArea = document.getElementById('drop-area');
+  const fileInput = document.getElementById('fileInput');
+  const fileName = document.getElementById('file-name');
+  const preview = document.getElementById('file-preview');
+  const form = document.getElementById('upload-form');
+  if (!dropArea || !fileInput) return;
+
+  let previewUrl;
+  const showFile = file => {
+    fileName.textContent = file ? `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB` : '';
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = file && file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+    if (preview) {
+      preview.src = previewUrl || '';
+      preview.hidden = !previewUrl;
     }
-    
-    // Typing effect for the home page
-    const typingElement = document.querySelector('.typing');
-    if (typingElement) {
-        const texts = [
-            "Detect deepfakes with AI",
-            "Verify image authenticity",
-            "Powered by MesoNet"
-        ];
-        
-        let textIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
-        let typingSpeed = 100;
-        
-        // Clear any existing content
-        typingElement.textContent = '';
-        
-        function type() {
-            const currentText = texts[textIndex];
-            
-            if (isDeleting) {
-                typingElement.textContent = currentText.substring(0, charIndex);
-                charIndex--;
-            } else {
-                typingElement.textContent = currentText.substring(0, charIndex + 1);
-                charIndex++;
-            }
-            
-            // Adjust typing speed for more natural effect
-            let nextSpeed = typingSpeed;
-            if (!isDeleting && charIndex === currentText.length) {
-                // Pause at the end of typing
-                isDeleting = true;
-                nextSpeed = 1500; // Wait longer at the end of the sentence
-            } else if (isDeleting && charIndex === 0) {
-                // Switch to the next text
-                isDeleting = false;
-                textIndex = (textIndex + 1) % texts.length;
-                nextSpeed = 500; // Pause before starting the next sentence
-            } else if (isDeleting) {
-                nextSpeed = 50; // Delete faster
-            } else {
-                // Random variation in typing speed for natural effect
-                nextSpeed = Math.random() * 50 + 80;
-            }
-            
-            setTimeout(type, nextSpeed);
-        }
-        
-        // Start typing effect
-        setTimeout(type, 1000);
+  };
+  fileInput.addEventListener('change', () => showFile(fileInput.files[0]));
+  ['dragenter', 'dragover'].forEach(eventName =>
+    dropArea.addEventListener(eventName, event => {
+      event.preventDefault();
+      dropArea.classList.add('dragover');
+    })
+  );
+  ['dragleave', 'drop'].forEach(eventName =>
+    dropArea.addEventListener(eventName, event => {
+      event.preventDefault();
+      dropArea.classList.remove('dragover');
+    })
+  );
+  dropArea.addEventListener('drop', event => {
+    const files = event.dataTransfer.files;
+    if (files.length) {
+      fileInput.files = files;
+      showFile(files[0]);
     }
+  });
+  form.addEventListener('submit', () => {
+    const button = form.querySelector('button[type="submit"]');
+    if (fileInput.files.length && button) {
+      button.disabled = true;
+      button.querySelector('span:first-child').textContent = 'Analyzing…';
+      const loading = document.getElementById('analysis-loading');
+      if (loading) loading.hidden = false;
+    }
+  });
+  const results = document.getElementById('results');
+  if (results)
+    requestAnimationFrame(() => results.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 });

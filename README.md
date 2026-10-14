@@ -1,89 +1,30 @@
-# FaceTruth - DeepFake Detection
+# FaceTruth
 
-A web application for detecting deepfake images using the MesoNet architecture.
+FaceTruth is an open, login-free web app for checking a still image with a MesoNet deepfake classifier. The interface presents the model output as an estimate, not proof.
 
-## Overview
+## Run locally
 
-This project implements a deepfake detection system using the MesoNet deep learning architecture. The web interface allows users to upload images and receive instant feedback on whether the image is likely to be authentic or a deepfake.
+Requires Python 3.12.
 
-## Features
-
-- Modern, responsive UI with Tailwind CSS
-- Real-time deepfake detection
-- Visual result presentation with confidence scores
-- Simple and intuitive user interface
-
-## Screenshots
-
-Here are some screenshots of the live demo:
-![Screenshot (13)](https://github.com/user-attachments/assets/173433c4-0f46-4745-ac04-183c1a036e5d)
-
-![Screenshot (14)](https://github.com/user-attachments/assets/3a7a8cc4-6e74-4dba-86d7-2768d28e97bf)
-
-![Screenshot (15)](https://github.com/user-attachments/assets/1190fa02-0ff6-4fd3-8d12-c29cf6cee8b7)
-
-![Screenshot (16)](https://github.com/user-attachments/assets/22ebe378-9855-4d0d-b345-c2ac4090c4da)
-
-## How It Works
-
-1. Upload an image through the web interface
-2. The MesoNet model analyzes the image for signs of manipulation
-3. Results are displayed with a confidence score and visualization
-4. Get instant feedback on image authenticity
-
-## Tech Stack
-
-- Python 3.x
-- Flask
-- PyTorch
-- Tailwind CSS
-- Matplotlib
-
-## Installation
-
-1. Clone the repository:
-```
-git clone https://github.com/yourusername/DeepFake_Detection_Using_MesoNet.git
-cd DeepFake_Detection_Using_MesoNet
-```
-
-2. Create a virtual environment:
-```
-python -m venv venv
-```
-
-3. Activate the virtual environment:
-   - Windows: `venv\Scripts\activate`
-   - macOS/Linux: `source venv/bin/activate`
-
-4. Install dependencies:
-```
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-5. Run the application:
-```
 python app.py
 ```
 
-6. Open your browser and navigate to: `http://127.0.0.1:5000`
+Open http://127.0.0.1:5000. The model weights are included in `mesonet_model.pth`.
 
-## Project Structure
+## Deploy to Vercel
 
-- `app.py`: Flask web application
-- `model.py`: MesoNet model implementation
-- `templates/`: HTML templates
-- `static/`: Static assets (CSS, JS, images)
-- `mesonet_model.pth`: Pre-trained model weights
+1. Push this repository to GitHub and import it in Vercel, or install the Vercel CLI and run `vercel`.
+2. Keep the project root as the Root Directory. Vercel detects the Flask app in `app.py` and installs the runtime packages from `requirements.txt`.
+3. Deploy. No environment variables or login provider are required.
 
-## Team
+The app uses CPU-only PyTorch wheels to keep the serverless bundle smaller. Vercel Functions are configured for up to 60 seconds; uploads are capped at 4 MB. Uploaded images are processed in memory and are not saved to disk.
 
-- Soham Chafale
-- Aditya Kinikar
-- Rajveer R.
-- Rajeev P.
+## Notes
 
-## License
-
-MIT
-
+- The model accepts image uploads in JPG, PNG and WEBP formats.
+- The model score reflects the classifier output and can be wrong; it is not forensic proof.
+- `render.yaml` remains available for the existing Render deployment path.

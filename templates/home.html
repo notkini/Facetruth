@@ -1,109 +1,205 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepFake Detection App</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <meta
+      name="description"
+      content="A simple, transparent way to inspect images for signs of facial manipulation."
+    />
+    <title>FaceTruth — Image authenticity, made clearer</title>
     <style>
-      body { 
-        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-        min-height: 100vh;
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f7f8f6;
+        color: #17221e;
+        font-family: 'DM Sans', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .page-width {
+        width: min(1120px, calc(100% - 64px));
+        margin: 0 auto;
+      }
+      .site-header {
+        height: 76px;
+        width: min(1320px, calc(100% - 64px));
+        margin: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #e4e8e4;
+      }
+      .hero {
+        min-height: 564px;
+        padding: 78px 0 74px;
+        display: grid;
+        grid-template-columns: 1.02fr 0.98fr;
+        align-items: center;
+        gap: 48px;
+      }
+      .hero h1 {
+        font:
+          600 clamp(54px, 6vw, 78px)/1.08 Manrope,
+          'DM Sans',
+          sans-serif;
+        letter-spacing: -5.5px;
+      }
+      .hero-art {
+        min-height: 300px;
+        background: #edf0e9;
+      }
+      @media (max-width: 760px) {
+        .page-width {
+          width: calc(100% - 32px);
+        }
+        .site-header {
+          width: calc(100% - 32px);
+        }
+        .hero {
+          padding: 48px 0 40px;
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
       }
     </style>
-</head>
-<body class="min-h-screen flex flex-col">
-    <!-- Navbar -->
-    <nav class="bg-black bg-opacity-80 text-white shadow-lg px-6 py-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                <span class="font-bold text-xl">DeepFake Detector</span>
-            </div>
-            <div class="flex space-x-4">
-                <a href="/" class="px-4 py-2 rounded-md text-sm font-medium text-white bg-slate-700 hover:bg-slate-800">Home</a>
-                <a href="/predict" class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Detect</a>
-            </div>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/app.css') }}" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="FaceTruth home"
+        ><span class="brand-mark">F</span><span>facetruth<span class="brand-dot">.</span></span></a
+      >
+      <nav>
+        <a class="nav-link active" href="/">Overview</a
+        ><a class="nav-link" href="/predict">Image check</a
+        ><a class="nav-cta" href="/predict">Try the checker <span>↗</span></a>
+      </nav>
+    </header>
+    <main>
+      <section class="hero page-width">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="pulse"></span> IMAGE AUTHENTICITY, MADE CLEARER</div>
+          <h1>Look a little<br /><span>closer.</span></h1>
+          <p class="hero-lede">
+            A thoughtful first check for manipulated faces. Upload an image to see what our MesoNet
+            model finds.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-dark" href="/predict">Check an image <span>↗</span></a
+            ><a class="text-action" href="#how-it-works">How it works <span>↓</span></a>
+          </div>
+          <div class="hero-note">
+            <span class="note-icon">◎</span
+            ><span
+              >Private by design <i>·</i> Your upload is processed for this check and not
+              kept.</span
+            >
+          </div>
         </div>
-    </nav>
-
-    <div class="flex-grow flex items-center justify-center py-12 px-4">
-        <div class="max-w-4xl w-full">
-            <!-- Main content card -->
-            <div class="bg-black bg-opacity-75 p-8 rounded-xl shadow-2xl mb-8 text-center">
-                <div class="mb-6">
-                    <h1 class="text-4xl font-bold text-white mb-2">DeepFake Detection</h1>
-                    <p class="text-gray-300 text-lg">Detect manipulated images with AI</p>
-                </div>
-                <div class="h-12 flex items-center justify-center mb-6">
-                    <span class="text-green-400 text-xl typing"></span>
-                </div>
-                <form action="/predict" class="mt-8">
-                    <button type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-600 hover:to-purple-700 transition duration-300 ease-in-out transform hover:-translate-y-1">
-                        Get Started
-                    </button>
-                </form>
+        <div class="hero-art" aria-label="Abstract image analysis illustration">
+          <div class="art-orbit orbit-one"></div>
+          <div class="art-orbit orbit-two"></div>
+          <div class="scan-card">
+            <div class="scan-top">
+              <span class="scan-label"><span class="tiny-dot"></span> FACE SCAN</span
+              ><span class="scan-id">FT / 024</span>
             </div>
-            
-            <!-- Project info card -->
-            <div class="bg-black bg-opacity-75 p-8 rounded-xl shadow-2xl mb-8">
-                <h2 class="text-2xl font-bold text-white mb-4 text-center">About The Project</h2>
-                <p class="text-gray-300 leading-relaxed mb-6">
-                    This DeepFake Detection tool uses MesoNet, a deep learning model specifically designed to detect facial manipulations in images.
-                    The model analyzes the mesoscopic properties of images to identify inconsistencies that are typically present in deepfakes.
-                    With high accuracy, our tool can help verify the authenticity of facial images in this era of widespread digital manipulation.
-                </p>
-                <div class="bg-gray-800 p-4 rounded-lg mb-6">
-                    <h3 class="text-xl font-semibold text-white mb-2">How It Works</h3>
-                    <ol class="text-gray-300 list-decimal list-inside space-y-2">
-                        <li>Upload your image through our simple interface</li>
-                        <li>Our AI model analyzes the image using the MesoNet architecture</li>
-                        <li>Get instant results showing whether the image is likely real or fake</li>
-                        <li>View confidence scores to understand the reliability of the prediction</li>
-                    </ol>
-                </div>
+            <div class="portrait">
+              <div class="portrait-sun"></div>
+              <div class="portrait-head"></div>
+              <div class="portrait-neck"></div>
+              <div class="portrait-shoulders"></div>
+              <div class="face-line line-a"></div>
+              <div class="face-line line-b"></div>
+              <div class="face-line line-c"></div>
+              <div class="scan-cross cross-a"></div>
+              <div class="scan-cross cross-b"></div>
+              <div class="scan-corner tl"></div>
+              <div class="scan-corner tr"></div>
+              <div class="scan-corner bl"></div>
+              <div class="scan-corner br"></div>
             </div>
-            
-            <!-- Team members card -->
-            <div class="bg-black bg-opacity-75 p-8 rounded-xl shadow-2xl">
-                <h2 class="text-2xl font-bold text-white mb-4 text-center">Our Team</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                    <!-- Replace with actual team member names -->
-                    <div class="bg-gray-800 p-4 rounded-lg text-center">
-                        <div class="w-20 h-20 mx-auto bg-blue-500 rounded-full flex items-center justify-center mb-3">
-                            <span class="text-2xl font-bold text-white">TM</span>
-                        </div>
-                        <h3 class="text-white font-medium">Soham Chafale</h3>
-                        <!-- <p class="text-gray-400 text-sm">Lead Developer</p> -->
-                    </div>
-                    <div class="bg-gray-800 p-4 rounded-lg text-center">
-                        <div class="w-20 h-20 mx-auto bg-purple-500 rounded-full flex items-center justify-center mb-3">
-                            <span class="text-2xl font-bold text-white">TM</span>
-                        </div>
-                        <h3 class="text-white font-medium">Aditya Kinikar</h3>
-                        <!-- <p class="text-gray-400 text-sm">ML Engineer</p> -->
-                    </div>
-                    <div class="bg-gray-800 p-4 rounded-lg text-center">
-                        <div class="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-3">
-                            <span class="text-2xl font-bold text-white">TM</span>
-                        </div>
-                        <h3 class="text-white font-medium">Rajveer Rajpurohit</h3>
-                        <!-- <p class="text-gray-400 text-sm">UI/UX Designer</p> -->
-                    </div>
-                    <div class="bg-gray-800 p-4 rounded-lg text-center">
-                      <div class="w-20 h-20 mx-auto bg-red-500 rounded-full flex items-center justify-center mb-3">
-                          <span class="text-2xl font-bold text-white">TM</span>
-                      </div>
-                      <h3 class="text-white font-medium">Rajeev Prabhu</h3>
-                      <!-- <p class="text-gray-400 text-sm">ML Engineer</p> -->
-                  </div>
-                </div>
+            <div class="scan-footer">
+              <span>ANALYSIS READY</span
+              ><span class="scan-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
             </div>
+          </div>
+          <div class="float-chip chip-top">
+            <span class="chip-symbol">✳</span
+            ><span><b>Image signals</b><small>Pattern analysis</small></span>
+          </div>
+          <div class="float-chip chip-bottom">
+            <span class="check-symbol">✓</span
+            ><span><b>One image at a time</b><small>Simple, private workflow</small></span>
+          </div>
+          <span class="art-index">01 — VISUAL ANALYSIS</span>
         </div>
-    </div>
-       
-    <script src="static/js/script.js"></script>
-</body>
+      </section>
+      <section class="trust-strip">
+        <div class="page-width trust-inner">
+          <span>BUILT FOR A MORE INFORMED FIRST LOOK</span>
+          <div><i class="trust-icon" aria-hidden="true">↥</i><b>01</b> Upload an image</div>
+          <div><i class="trust-icon" aria-hidden="true">⌗</i><b>02</b> Run a model check</div>
+          <div><i class="trust-icon" aria-hidden="true">✓</i><b>03</b> Review the signal</div>
+        </div>
+      </section>
+      <section class="how page-width" id="how-it-works">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow">A SIMPLE THREE-STEP CHECK</div>
+            <h2>Clarity in a few clicks.</h2>
+          </div>
+          <p>FaceTruth gives you a quick signal to help you decide what to look at next.</p>
+        </div>
+        <div class="steps">
+          <article class="step-card">
+            <span class="step-number">01</span>
+            <div class="step-icon upload-icon">↥</div>
+            <h3>Choose an image</h3>
+            <p>Upload a clear image with a visible face. JPG, PNG and WEBP files are supported.</p>
+          </article>
+          <article class="step-card">
+            <span class="step-number">02</span>
+            <div class="step-icon scan-icon">⌗</div>
+            <h3>We inspect patterns</h3>
+            <p>MesoNet analyzes visual patterns that can be associated with facial manipulation.</p>
+          </article>
+          <article class="step-card">
+            <span class="step-number">03</span>
+            <div class="step-icon result-icon">◌</div>
+            <h3>Review the result</h3>
+            <p>See the model’s estimate and confidence split, then use your own judgment.</p>
+          </article>
+        </div>
+        <div class="disclaimer">
+          <span>ⓘ</span>
+          <p>
+            <b>A useful signal, not a verdict.</b> Automated image analysis can be wrong. Results
+            should not be treated as proof of authenticity or manipulation.
+          </p>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="page-width footer-inner">
+        <a class="brand" href="/"
+          ><span class="brand-mark">F</span
+          ><span>facetruth<span class="brand-dot">.</span></span></a
+        ><span>Image analysis, with a little more context.</span
+        ><a href="/predict">Start a check <span>↗</span></a>
+      </div>
+    </footer>
+  </body>
 </html>

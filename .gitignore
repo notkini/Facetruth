@@ -12,6 +12,7 @@ ENV/
 dist/
 build/
 *.egg-info/
+node_modules/
 
 # Local development settings
 .env
@@ -19,8 +20,8 @@ build/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Model files (optional - remove if you want to include these)
-# *.pth
+# Model files
+*.pth
 
 # OS specific files
 .DS_Store
@@ -30,4 +31,4 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo

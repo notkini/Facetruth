@@ -1,113 +1,164 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepFake Detection App</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      body { 
-        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-        min-height: 100vh;
-      }
-    </style>
-</head>
-<body class="min-h-screen py-12 px-4">
-
-    <!-- Navbar -->
-    <nav class="fixed top-0 left-0 right-0 bg-black bg-opacity-80 text-white shadow-lg px-6 py-4 z-10">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <span class="font-bold text-xl">DeepFake Detector</span>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <title>Image check — FaceTruth</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/app.css') }}" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="FaceTruth home"
+        ><span class="brand-mark">F</span><span>facetruth<span class="brand-dot">.</span></span></a
+      >
+      <nav>
+        <a class="nav-link" href="/">Overview</a
+        ><a class="nav-link active" href="/predict">Image check</a
+        ><a class="nav-cta" href="/predict">New check <span>↗</span></a>
+      </nav>
+    </header>
+    <main class="checker page-width">
+      <div class="checker-heading">
+        <a class="back-link" href="/">← Back to overview</a>
+        <div class="eyebrow"><span class="pulse"></span> PRIVATE IMAGE CHECK</div>
+        <h1>Check an image<span>.</span></h1>
+        <p>Upload a face image and get a quick read from our MesoNet model.</p>
+      </div>
+      {% if error %}
+      <div class="error-banner" role="alert">{{ error }}</div>
+      {% endif %}
+      <div class="checker-grid">
+        <section class="upload-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">YOUR IMAGE</span>
+              <h2>Start with a photo</h2>
             </div>
-            <div class="flex space-x-4">
-                <a href="/" class="px-3 py-2 text-gray-300 hover:text-white">Home</a>
-                <a href="/predict" class="px-3 py-2 text-white bg-blue-600 rounded">Detect</a>
+            <span class="step-pill">STEP 01</span>
+          </div>
+          <form action="/predict" method="POST" enctype="multipart/form-data" id="upload-form">
+            <label class="dropzone" id="drop-area" for="fileInput"
+              ><input
+                id="fileInput"
+                type="file"
+                name="file"
+                accept="image/png,image/jpeg,image/webp"
+                required /><span class="drop-icon">↑</span><strong>Drop your image here</strong
+              ><span class="drop-or">or <span>browse files</span></span
+              ><span class="file-types">JPG, PNG or WEBP · Up to 4 MB</span
+              ><span id="file-name" class="selected-file"></span
+              ><img
+                id="file-preview"
+                class="file-preview"
+                alt="Selected image preview"
+                hidden /></label
+            ><button class="button button-dark analyze-button" type="submit">
+              <span>Analyze image</span><span>↗</span>
+            </button>
+            <div
+              class="analysis-loading"
+              id="analysis-loading"
+              role="status"
+              aria-live="polite"
+              hidden
+            >
+              <span class="loading-spinner" aria-hidden="true"></span
+              ><span>Analyzing image… This may take a moment.</span>
             </div>
+            <p class="privacy-copy"><span>◎</span> Your image is only used for this analysis.</p>
+          </form>
+        </section>
+        <aside class="guide-panel">
+          <div class="panel-kicker">FOR A BETTER CHECK</div>
+          <h2>A few things to know.</h2>
+          <div class="guide-item">
+            <span>01</span>
+            <p>Use a clear image with a face that’s large enough to see.</p>
+          </div>
+          <div class="guide-item">
+            <span>02</span>
+            <p>This tool analyzes still images, not videos or links.</p>
+          </div>
+          <div class="guide-item">
+            <span>03</span>
+            <p>The output is a model estimate, so treat it as one signal.</p>
+          </div>
+          <div class="guide-footer">
+            <span class="guide-spark">✳</span>
+            <p>Designed to inform your next question, not make the decision for you.</p>
+          </div>
+        </aside>
+      </div>
+      {% if result_image %}
+      <section class="results-panel" id="results">
+        <div class="result-heading">
+          <div>
+            <div class="eyebrow">ANALYSIS COMPLETE</div>
+            <h2>Your image check</h2>
+          </div>
+          <span class="step-pill">MODEL ESTIMATE</span>
         </div>
-    </nav>
-
-    <div class="max-w-4xl mx-auto mt-20">
-
-        <!-- FORM -->
-        <div class="bg-black bg-opacity-75 p-8 rounded-xl shadow-2xl mb-8">
-            <h1 class="text-3xl font-bold text-white text-center mb-6">
-                Upload Image for Detection
-            </h1>
-
-            <form action="/predict" method="POST" enctype="multipart/form-data">
-
-                <!-- DROP AREA -->
-                <div id="drop-area" 
-                     class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center cursor-pointer">
-
-                    <p class="text-gray-300 text-lg mb-2">
-                        Drag & Drop or Click to Upload
-                    </p>
-
-                    <input id="fileInput" type="file" name="file" required class="hidden">
-
-                    <p id="file-name" class="text-gray-400 text-sm"></p>
-                </div>
-
-                <!-- BUTTON -->
-                <div class="text-center mt-6">
-                    <button type="submit"
-                        class="py-3 px-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg">
-                        Analyze Image
-                    </button>
-                </div>
-
-            </form>
-        </div>
-
-        <!-- RESULTS -->
-        {% if graph %}
-        <div class="bg-black bg-opacity-75 p-8 rounded-xl shadow-2xl">
-            <h2 class="text-2xl text-white text-center mb-6">Results</h2>
-
-            <div class="flex flex-col md:flex-row justify-center gap-8">
-
-                <img src="{{ url_for('static', filename='images/' + filename) }}" 
-                     class="w-64 h-64 object-cover rounded">
-
-                <img src="data:image/png;base64,{{ graph }}" 
-                     class="w-64 rounded">
+        <div class="result-content">
+          <div class="result-preview">
+            <img src="{{ result_image }}" alt="Image submitted for analysis" /><span
+              >{{ filename }}</span
+            >
+          </div>
+          <div class="result-summary">
+            <div
+              class="verdict-icon {% if prediction == 'Real' %}verdict-real{% else %}verdict-fake{% endif %}"
+            >
+              {% if prediction == 'Real' %}✓{% else %}⌕{% endif %}
             </div>
-
-            <div class="text-center mt-6">
-                <h3 class="text-3xl font-bold text-white">{{ prediction }}</h3>
-                <p class="text-gray-300 mt-2">
-                    Real: {{ prob_real }}% | Fake: {{ prob_fake }}%
-                </p>
+            <div class="result-label">MODEL ESTIMATE</div>
+            <h3>Likely {{ prediction|lower }}</h3>
+            <p>
+              The model’s strongest signal points toward this result. This estimate can be wrong and
+              is not proof.
+            </p>
+            <div class="confidence-title">
+              <span>Confidence split</span><span>MODEL OUTPUT</span>
             </div>
+            <div class="confidence-row">
+              <div><span class="legend-dot real-dot"></span> Likely real</div>
+              <strong>{{ prob_real }}%</strong>
+            </div>
+            <div class="meter">
+              <span class="meter-real" style="width: {{ prob_real }}%"></span>
+            </div>
+            <div class="confidence-row">
+              <div><span class="legend-dot fake-dot"></span> Likely manipulated</div>
+              <strong>{{ prob_fake }}%</strong>
+            </div>
+            <div class="meter">
+              <span class="meter-fake" style="width: {{ prob_fake }}%"></span>
+            </div>
+            <a class="try-again" href="/predict">Check another image <span>↗</span></a>
+          </div>
         </div>
-        {% endif %}
-
-    </div>
-
-    <!-- JS (FIXED, SAFE) -->
-    <script>
-        const dropArea = document.getElementById("drop-area");
-        const fileInput = document.getElementById("fileInput");
-        const fileName = document.getElementById("file-name");
-
-        dropArea.addEventListener("click", () => fileInput.click());
-
-        fileInput.addEventListener("change", () => {
-            fileName.textContent = fileInput.files[0].name;
-        });
-
-        dropArea.addEventListener("dragover", (e) => {
-            e.preventDefault();
-        });
-
-        dropArea.addEventListener("drop", (e) => {
-            e.preventDefault();
-            fileInput.files = e.dataTransfer.files;
-            fileName.textContent = e.dataTransfer.files[0].name;
-        });
-    </script>
-
-</body>
+        <div class="result-disclaimer">
+          ⓘ Automated detection has limitations. Consider the source and context of an image before
+          drawing conclusions.
+        </div>
+      </section>
+      {% endif %}
+    </main>
+    <footer class="site-footer">
+      <div class="page-width footer-inner">
+        <a class="brand" href="/"
+          ><span class="brand-mark">F</span
+          ><span>facetruth<span class="brand-dot">.</span></span></a
+        ><span>Image analysis, with a little more context.</span
+        ><a href="/">Back to overview <span>↗</span></a>
+      </div>
+    </footer>
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+  </body>
 </html>

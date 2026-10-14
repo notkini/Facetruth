@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  },
+  "scripts": {
+    "format": "prettier --write \"templates/**/*.html\" \"static/styles/**/*.css\" \"static/js/**/*.js\" \"*.json\"",
+    "format:check": "prettier --check \"templates/**/*.html\" \"static/styles/**/*.css\" \"static/js/**/*.js\" \"*.json\""
+  }
+}
